@@ -4,7 +4,7 @@ import time
 import random
 
 # The URL where your app is running locally
-API_URL = "http://smags.engbert.online/api/data"
+API_URL = "http://127.0.0.1:8080/api/data" #"http://smags.engbert.online/api/data"
 
 # Mimic the MAC addresses of your greenhouse sensors
 SENSORS = [

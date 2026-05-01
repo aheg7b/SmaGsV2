@@ -382,7 +382,7 @@ def application(environ, start_response):
         return handle_devices(environ, start_response)
     elif path == "/update_device":
         return handle_update_device(environ, start_response)
-    elif path == "/api/history/":
+    elif path.startswith("/api/history/"):
         return handle_sensor_history(environ, start_response)
     elif path == "/sessions":
         return handle_sessions(environ, start_response)

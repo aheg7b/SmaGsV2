@@ -164,7 +164,7 @@
                         {% if row.sensor_id not in seen.sensors %}
                             {# Pull device info from the map populated in app.py[cite: 10] #}
                             {% set device = device_map.get(row.sensor_id, {"name": row.sensor_id, "visible_metrics": all_metrics, "unit": "C", "crop_type": "generic"}) %}
-                            <div class="device-card" onclick="toggleGraph('{{ row.sensor_id }}')" style="cursor:pointer;">
+                            <div class="device-card" onclick="toggleGraph('{{ row.sensor_id }}', '{{ device.name }}')" style="cursor:pointer;">
                                 <div class="device-header">
                                     <span class="device-name">{{ device.name }}</span>
                                     {# Dynamic Icon Mapping #}
@@ -231,22 +231,25 @@
                                     {{ rec.message }}
                                     </div>
                                     {% endif %}
-                                    <!-- old Plotly <div id="graph-{{ row.sensor_id }}" style="display:none; margin-top:16px; height:300px;">
-                                        <div id="chart-{{ row.sensor_id }}" style="width:100%; height:100%;"></div>
-                                    </div> -->
-                                    <div id="graph-{{ row.sensor_id }}" style="display:none; margin-top:16px;">
-                                        <canvas id="chart-{{ row.sensor_id }}" height="120"></canvas>
-                                    </div>
                                 {% set seen.sensors = seen.sensors + [row.sensor_id] %}
-                            </div>
-                            {% set seen.sensors = seen.sensors + [row.sensor_id] %}
-                        {% endif %}
-                    {% endfor %}
-                {% else %}
-                    <div class="no-data-placeholder">
-                        <p>Waiting for sensor data from ESP32 nodes...</p>
-                    </div>
-                {% endif %}
+                                </div>
+                                {% set seen.sensors = seen.sensors + [row.sensor_id] %}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data-placeholder">
+                            <p>Waiting for sensor data from ESP32 nodes...</p>
+                        </div>
+                    {% endif %}
+                 </div> 
+            </div>
+        <div id="graph-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; justify-content:center; align-items:center;">
+            <div style="background:#1a1a1a; border-radius:12px; padding:24px; width:80%; max-width:900px; position:relative;">
+                <button onclick="closeGraph()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#ccc; font-size:24px; cursor:pointer;">✕</button>
+                <h3 id="graph-modal-title" style="color:#2ecc71; margin-bottom:16px;"></h3>
+                <div style="height:350px;">
+                    <canvas id="graph-modal-canvas"></canvas>
+                </div>
             </div>
         </div>
 
@@ -339,81 +342,59 @@
                 setTimeout(() => popup.remove(), 1000);
             }, 5000);
         }       
-            const activeCharts = {};
+            let activeChart = null;
 
-            async function toggleGraph(sensorId) {
-                const container = document.getElementById('graph-' + sensorId);
-                if (container.style.display === 'block') {
-                    container.style.display = 'none';
-                    return;
+            async function toggleGraph(sensorId, sensorName) {
+                const modal = document.getElementById("graph-modal");
+                const title = document.getElementById("graph-modal-title");
+                const canvas = document.getElementById("graph-modal-canvas");
+
+                modal.style.display = "flex";
+                title.textContent = sensorName + " — Last 7 Days";
+
+                if (activeChart) {
+                    activeChart.destroy();
+                    activeChart = null;
                 }
-                container.style.display = 'block';
 
-                if (activeCharts[sensorId]) return;
-
-                const res = await fetch('/api/history/' + sensorId + '?hours=168');
+                const res = await fetch('/api/history/' + sensorId + "?hours=168");
                 const data = await res.json();
 
-                const step = Math.max(1, Math.floor(data.length / 25));
+                const step = Math.max(1, Math.floor(data.length / 50)); // 
                 const sampled = data.filter((_, i) => i % step === 0);
                 const labels = sampled.map(d => d.timestamp.split(' ')[1]);
-                const ctx = document.getElementById('chart-' + sensorId).getContext('2d');
+                const ctx = canvas.getContext('2d');
 
-                activeCharts[sensorId] = new Chart(ctx, {
-                    type: 'line',
+                activeChart = new Chart(ctx, {
+                    type: "line",
                     data: {
                         labels: labels,
-                        datasets: [
-                            { label: 'Soil Moisture (%)', data: sampled.map(d => d.soil_moisture), borderColor: '#2ecc71', tension: 0.3, fill: false },
-                            { label: 'Soil Temp (°C)', data: sampled.map(d => d.soil_temp), borderColor: '#e67e22', tension: 0.3, fill: false },
-                            { label: 'Air Humidity (%)', data: sampled.map(d => d.air_humidity), borderColor: '#3498db', tension: 0.3, fill: false },
-                            { label: 'Air Temp (°C)', data: sampled.map(d => d.air_temp), borderColor: '#e74c3c', tension: 0.3, fill: false }
+                        datasets: [ // Data set names and colors also a tension for smoother lines
+                            { label: "Soil Moisture (%)", data: sampled.map(d => d.soil_moisture), borderColor: '#62b7f7', tension: 0.3, fill: false },
+                            { label: "Soil Temp (°C)", data: sampled.map(d => d.soil_temp), borderColor: '#fe8660', tension: 0.3, fill: false },
+                            { label: "Air Humidity (%)", data: sampled.map(d => d.air_humidity), borderColor: '#5dbdb4', tension: 0.3, fill: false },
+                            { label: "Air Temp (°C)", data: sampled.map(d => d.air_temp), borderColor: '#46d583', tension: 0.3, fill: false }
                         ]
                     },
                     options: {
                         responsive: true,
-                        plugins: { legend: { labels: { color: '#ccc' } } },
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: "#ccc" } }},
                         scales: {
-                            x: { ticks: { color: '#aaa', maxTicksLimit: 8 } },
-                            y: { ticks: { color: '#aaa' } }
+                            x: { ticks: { color: "#aaa", maxTicksLimit: 8 } },
+                            y: { ticks: { color: "#aaa" }}
                         }
                     }
                 });
             }
-            /* const activeCharts = {};  <-- This is old Plotly graph keeping just in case
 
-            async function toggleGraph(sensorId) {
-                const container = document.getElementById('graph-' + sensorId);
-                if (container.style.display === 'block') {
-                    container.style.display = 'none';
-                    return;
+            function closeGraph() {
+                document.getElementById("graph-modal").style.display = "none";
+                if (activeChart) {
+                    activeChart.destroy();
+                    activeChart = null;
                 }
-                container.style.display = 'block';
-
-                if (activeCharts[sensorId]) return;
-                activeCharts[sensorId] = true;
-
-                const res = await fetch('/api/history/' + sensorId + '?hours=168');
-                const data = await res.json();
-                console.log(sensorId, data);
-
-                const timestamps = data.map(d => d.timestamp);
-
-                Plotly.newPlot('chart-' + sensorId, [
-                    { x: timestamps, y: data.map(d => d.soil_moisture), name: 'Soil Moisture (%)', line: { color: '#2ecc71' } },
-                    { x: timestamps, y: data.map(d => d.soil_temp), name: 'Soil Temp (°C)', line: { color: '#e67e22' } },
-                    { x: timestamps, y: data.map(d => d.air_humidity), name: 'Air Humidity (%)', line: { color: '#3498db' } },
-                    { x: timestamps, y: data.map(d => d.air_temp), name: 'Air Temp (°C)', line: { color: '#e74c3c' } }
-                ], {
-                    paper_bgcolor: 'transparent',
-                    plot_bgcolor: 'transparent',
-                    font: { color: '#ccc' },
-                    margin: { t: 20, r: 20, b: 60, l: 40 },
-                    xaxis: { color: '#aaa' },
-                    yaxis: { color: '#aaa' },
-                    legend: { orientation: 'h', y: -0.2 }
-                });
-} */
-    </script>
-</body>
+            }
+        </script>
+    </body>
 </html>

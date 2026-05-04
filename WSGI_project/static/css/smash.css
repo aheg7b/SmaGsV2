@@ -1,0 +1,218 @@
+:root {
+    --bg-color: #0a0a0d;
+    --panel-bg: #111114;
+    --text-color: #ffffff;
+
+    --accent-red: #e60012;
+    --accent-yellow: #ffcc00;
+    --accent-blue: #3a86ff;
+
+    --border-dark: #1f1f26;
+    --border-light: #2c2c35;
+}
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Background (arena feel) */
+body {
+    font-family: 'Arial Black', Impact, sans-serif;
+    background: radial-gradient(circle at center, #1a1a1f, #050507);
+    color: var(--text-color);
+}
+
+/* ===== TOP BAR (Ultimate style strip) ===== */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 14px 5%;
+    background: #000;
+    border-bottom: 5px solid var(--accent-red);
+}
+
+/* Title */
+.topbar h1 {
+    font-size: 1.6rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.topbar h1 span {
+    color: var(--accent-yellow);
+}
+
+/* Nav buttons (fighter menu style) */
+.nav-link {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+
+    margin-left: 10px;
+    padding: 8px 14px;
+
+    background: #111114;
+    border: 2px solid var(--border-light);
+
+    transition: 0.2s;
+}
+
+.nav-link:hover {
+    border-color: var(--accent-yellow);
+    color: var(--accent-yellow);
+}
+
+/* ===== GRID ===== */
+.container {
+    width: 90%;
+    margin: 2rem auto;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+
+    grid-auto-rows: 1fr; /* equal height */
+}
+
+/* ===== SENSOR CARD (fighter slot) ===== */
+.device-card {
+    position: relative;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 14px;
+
+    background: var(--panel-bg);
+    border: 3px solid var(--border-dark);
+
+    /* angled Smash panel */
+    clip-path: polygon(
+        0 0,
+        92% 0,
+        100% 12%,
+        100% 100%,
+        8% 100%,
+        0 88%
+    );
+
+    transition: 0.2s;
+}
+
+/* Top red stripe (Ultimate signature look) */
+.device-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 6px;
+
+    background: var(--accent-red);
+}
+
+/* Hover (selected fighter) */
+.device-card:hover {
+    transform: scale(1.04);
+    border-color: var(--accent-yellow);
+}
+
+/* Header */
+.device-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 6px;
+}
+
+.device-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.device-time {
+    font-size: 0.7rem;
+    color: #aaa;
+}
+
+/* ===== METRICS (like stat bars) ===== */
+.metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+    justify-content: space-evenly;
+}
+
+/* Metric row */
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 6px 8px;
+
+    background: #0a0a0d;
+    border-left: 4px solid var(--accent-blue);
+
+    font-size: 0.8rem;
+}
+
+/* Label */
+.metric .label {
+    color: #bbb;
+}
+
+/* Value */
+.metric .value {
+    font-weight: bold;
+}
+
+/* Colors (more vivid like Ultimate UI) */
+.metric.moisture .value { color: #00cfff; }
+.metric.soiltemp .value { color: #ff453a; }
+.metric.humidity .value { color: #bf5af2; }
+.metric.airtemp .value { color: var(--accent-yellow); }
+
+/* ===== TABLE (scoreboard style) ===== */
+.table-container {
+    margin-top: 2rem;
+    border: 3px solid var(--border-dark);
+    background: #0a0a0d;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    padding: 10px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+
+    background: #111114;
+    border-bottom: 2px solid var(--border-light);
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #1f1f26;
+}
+
+.timestamp-cell {
+    font-family: monospace;
+    color: #888;
+}

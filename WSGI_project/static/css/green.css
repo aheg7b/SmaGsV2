@@ -298,3 +298,88 @@ td {
     letter-spacing: 1px;
     margin-bottom: 2px;
 }
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.theme-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.theme-picker form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+.theme-picker label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.75;
+}
+.theme-picker select {
+    min-width: 130px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+.device-card.clickable {
+    cursor: pointer;
+}
+
+.graph-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.graph-modal.open {
+    display: flex;
+}
+.graph-modal-content {
+    background: #1a1a1a;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 900px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.graph-modal-content h3 {
+    color: var(--accent-primary);
+    margin-bottom: 16px;
+    font-size: 1.1rem;
+}
+.graph-modal-canvas-wrap {
+    height: 360px;
+}
+.graph-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: var(--accent-secondary);
+    font-size: 26px;
+    cursor: pointer;
+    line-height: 1;
+}
+.graph-modal-close:hover {
+    color: var(--accent-primary);
+}

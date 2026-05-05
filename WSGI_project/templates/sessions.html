@@ -75,7 +75,7 @@
         <div class="session-list">
             {% for s in sessions %}
             <div class="device-card session-card">
-                <a href="/api/history/all?session_id={{ s.id }}" class="session-link-overlay">
+                <a href="/sessions/{{ s.id }}" class="session-link-overlay">
                     <div class="session-item-content">
                         <div class="session-info">
                             <div class="device-name" style="font-size: 14px; margin-bottom: 8px;">

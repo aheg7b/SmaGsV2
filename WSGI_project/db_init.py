@@ -20,7 +20,6 @@ def setup_database():
     print("--- Initializing Blank SmaGS Database ---")
 
     # 1. Create Devices Table
-    # Stores global settings like plant type and display units[cite: 13, 14]
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS devices (
             sensor_id TEXT PRIMARY KEY,
@@ -60,12 +59,11 @@ def setup_database():
     ''')
 
     # 4. Create an initial active session
-    # The system needs at least one active session to log data against[cite: 14]
     cursor.execute("INSERT INTO sessions (status) VALUES ('active')")
 
     conn.commit()
     conn.close()
-    print("Success: Blank database initialized with support for advisor_4 profiles.")
+    print("Success: Blank database initialized.")
 
 if __name__ == "__main__":
     setup_database()

@@ -8,7 +8,7 @@ from datetime import datetime
 from urllib.parse import parse_qs
 from jinja2 import Environment, FileSystemLoader
 from weather import get_forecast
-from advisor import recommend
+from llm_advisor import recommend
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, os.getenv("DB_PATH", "smags.db"))
@@ -107,38 +107,39 @@ def handle_index(environ, start_response):
         user_unit = sensor_config.get("unit", "C") 
 
         device_map[s_id] = {
-            "name": d['name'], 
+            "name": d['name'],
             "visible_metrics": user_visible,
-            "unit": user_unit
+            "unit": user_unit,
+            "crop_type": d['crop_type'] or 'generic'
         }
 
     forecast = get_forecast()
-    recomendations = {}
+    recommendations = {}
     seen_for_rec = set()
     for row in latest_data:
-        sid=row['sensor_id']
+        sid = row['sensor_id']
         if sid in seen_for_rec:
             continue
         seen_for_rec.add(sid)
-        current_crop = device_map.get(sid,{}).get('crop_type','generic')
+        current_crop = device_map.get(sid, {}).get('crop_type', 'generic')
         reading = {
             'soil_moisture': row['soil_moisture'],
             'soil_temp': row['soil_temp'],
             'air_temp': row['air_temp'],
             'air_humidity': row['air_humidity']
         }
-        recomendations[sid] = recommend(reading, forecast, crop=current_crop)
+        recommendations[sid] = recommend(reading, forecast, crop=current_crop)
 
     template = env.get_template("index.html")
     content = template.render(
-        latest=latest_data, 
-        device_map=device_map, 
+        latest=latest_data,
+        device_map=device_map,
         theme=theme,
         themes=get_available_themes(),
         all_metrics=ALL_METRICS,
         consented=consented,
         forecast=forecast,
-        recomendations=recomendations
+        recommendations=recommendations
     ).encode("utf-8")
 
     start_response("200 OK", [("Content-Type", "text/html")])
@@ -321,22 +322,94 @@ def handle_update_device(environ, start_response):
 def handle_sensor_history(environ, start_response):
     """API Endpoint for Chart.js historical data."""
     path = environ.get('PATH_INFO', '')
-    sensor_id = path.split('/')[-1]
+    sensor_id = urllib.parse.unquote(path[len("/api/history/"):])
     params = parse_qs(environ.get('QUERY_STRING', ''))
     hours = int(params.get('hours', [24])[0])
-    
+    session_id = params.get('session_id', [None])[0]
+
     conn = get_db()
-    query = """
-        SELECT timestamp, soil_moisture, soil_temp, air_humidity, air_temp 
-        FROM sensor_data 
-        WHERE sensor_id = ? AND timestamp >= datetime('now', ?) 
-        ORDER BY timestamp ASC
-    """
-    history = conn.execute(query, (sensor_id, f'-{hours} hours')).fetchall()
+    if session_id:
+        query = """
+            SELECT timestamp, soil_moisture, soil_temp, air_humidity, air_temp
+            FROM sensor_data
+            WHERE sensor_id = ? AND session_id = ?
+            ORDER BY timestamp ASC
+        """
+        history = conn.execute(query, (sensor_id, session_id)).fetchall()
+    else:
+        query = """
+            SELECT timestamp, soil_moisture, soil_temp, air_humidity, air_temp
+            FROM sensor_data
+            WHERE sensor_id = ? AND timestamp >= datetime('now', ?)
+            ORDER BY timestamp ASC
+        """
+        history = conn.execute(query, (sensor_id, f'-{hours} hours')).fetchall()
     conn.close()
 
     content = json.dumps([dict(row) for row in history]).encode('utf-8')
     start_response("200 OK", [("Content-Type", "application/json")])
+    return [content]
+
+def handle_session_detail(environ, start_response):
+    path = environ.get('PATH_INFO', '')
+    try:
+        session_id = int(path.rsplit('/', 1)[-1])
+    except ValueError:
+        start_response("404 Not Found", [("Content-Type", "text/plain")])
+        return [b"Invalid session id"]
+
+    consented = get_cookie(environ, 'cookie_consent', 'false') == 'true'
+    theme = get_cookie(environ, 'theme', 'green') if consented else 'green'
+
+    conn = get_db()
+    session = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
+    if not session:
+        conn.close()
+        start_response("404 Not Found", [("Content-Type", "text/plain")])
+        return [b"Session not found"]
+
+    readings = conn.execute("""
+        SELECT * FROM sensor_data
+        WHERE session_id = ?
+        ORDER BY timestamp ASC
+    """, (session_id,)).fetchall()
+
+    devices_raw = conn.execute("SELECT sensor_id, name, crop_type FROM devices").fetchall()
+    conn.close()
+
+    device_map = {d['sensor_id']: {'name': d['name'], 'crop_type': d['crop_type'] or 'generic'} for d in devices_raw}
+
+    series = {}
+    for r in readings:
+        sid = r['sensor_id']
+        if sid not in series:
+            series[sid] = {
+                'name': device_map.get(sid, {}).get('name', sid),
+                'crop': device_map.get(sid, {}).get('crop_type', 'generic'),
+                'timestamps': [],
+                'soil_moisture': [],
+                'soil_temp': [],
+                'air_humidity': [],
+                'air_temp': [],
+            }
+        series[sid]['timestamps'].append(r['timestamp'])
+        series[sid]['soil_moisture'].append(r['soil_moisture'])
+        series[sid]['soil_temp'].append(r['soil_temp'])
+        series[sid]['air_humidity'].append(r['air_humidity'])
+        series[sid]['air_temp'].append(r['air_temp'])
+
+    template = env.get_template("session_detail.html")
+    content = template.render(
+        session=dict(session),
+        readings=readings,
+        device_map=device_map,
+        series_json=json.dumps(series),
+        theme=theme,
+        themes=get_available_themes(),
+        consented=consented
+    ).encode("utf-8")
+
+    start_response("200 OK", [("Content-Type", "text/html")])
     return [content]
 
 def handle_delete_session(environ, start_response):
@@ -382,10 +455,12 @@ def application(environ, start_response):
         return handle_devices(environ, start_response)
     elif path == "/update_device":
         return handle_update_device(environ, start_response)
-    elif path == "/api/history/":
+    elif path.startswith("/api/history/") and len(path) > len("/api/history/"):
         return handle_sensor_history(environ, start_response)
     elif path == "/sessions":
         return handle_sessions(environ, start_response)
+    elif path.startswith("/sessions/") and len(path) > len("/sessions/"):
+        return handle_session_detail(environ, start_response)
     elif path == "/delete_session":
         return handle_delete_session(environ, start_response)
     

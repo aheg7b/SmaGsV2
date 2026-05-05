@@ -322,40 +322,6 @@ tbody tr:hover td {
     margin-bottom: 4px;
 }
 
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-.nav-menu {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.theme-picker {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.theme-picker form {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-}
-.theme-picker label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    opacity: 0.75;
-}
-.theme-picker select {
-    min-width: 130px;
-    padding: 6px 10px;
-    font-size: 0.85rem;
-}
 
 .device-card.clickable {
     cursor: pointer;

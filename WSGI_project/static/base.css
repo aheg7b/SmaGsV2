@@ -1,0 +1,50 @@
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.theme-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.theme-picker form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+.theme-picker label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.75;
+}
+.theme-picker select {
+    min-width: 130px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    background: rgba(0, 0, 0, 0.35);
+    color: inherit;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='currentColor' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+}
+.theme-picker select option {
+    background: #111;
+    color: #eee;
+}

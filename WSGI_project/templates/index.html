@@ -144,7 +144,7 @@
                                     {% if "soil_moisture" in device.visible_metrics %}
                                     <div class="metric moisture">
                                         <span class="label">Soil Moisture</span>
-                                        <span class="value">{{ row.soil_moisture }}%</span>
+                                        <span class="value">{{ row.soil_moisture | round(0) | int }}%</span>
                                     </div>
                                     {% endif %}
 
@@ -155,7 +155,7 @@
                                             {% if device.unit == 'F' %}
                                                 {{ ((row.soil_temp * 9/5) + 32) | round(1) }}°F
                                             {% else %}
-                                                {{ row.soil_temp }}°C
+                                                {{ row.soil_temp | round(1) }}°C
                                             {% endif %}
                                         </span>
                                     </div>
@@ -164,7 +164,7 @@
                                     {% if "air_humidity" in device.visible_metrics %}
                                     <div class="metric humidity">
                                         <span class="label">Air Humidity</span>
-                                        <span class="value">{{ row.air_humidity }}%</span>
+                                        <span class="value">{{ row.air_humidity | round(0) | int }}%</span>
                                     </div>
                                     {% endif %}
 
@@ -175,7 +175,7 @@
                                             {% if device.unit == 'F' %}
                                                 {{ ((row.air_temp * 9/5) + 32) | round(1) }}°F
                                             {% else %}
-                                                {{ row.air_temp }}°C
+                                                {{ row.air_temp | round(1) }}°C
                                             {% endif %}
                                         </span>
                                     </div>
@@ -235,20 +235,20 @@
                                 <strong>{{ device.name }}</strong><br>
                                 <small style="color: var(--accent-muted)">{{ device.crop_type | title }}</small>
                             </td>
-                            <td>{{ row.soil_moisture }}%</td>
+                            <td>{{ row.soil_moisture | round(0) | int }}%</td>
                             <td>
                                 {% if device.unit == 'F' %}
                                     {{ ((row.soil_temp * 9/5) + 32) | round(1) }}°F
                                 {% else %}
-                                    {{ row.soil_temp }}°C
+                                    {{ row.soil_temp | round(1) }}°C
                                 {% endif %}
                             </td>
-                            <td>{{ row.air_humidity }}%</td>
+                            <td>{{ row.air_humidity | round(0) | int }}%</td>
                             <td>
                                 {% if device.unit == 'F' %}
                                     {{ ((row.air_temp * 9/5) + 32) | round(1) }}°F
                                 {% else %}
-                                    {{ row.air_temp }}°C
+                                    {{ row.air_temp | round(1) }}°C
                                 {% endif %}
                             </td>
                             <td class="timestamp-cell">{{ row.timestamp }}</td>

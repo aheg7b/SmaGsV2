@@ -50,8 +50,8 @@ def _summarize_forecast(forecast):
         lines.append(f"- {p.get('name','?')}: {p.get('temperature')}°{p.get('temperatureUnit','F')}{pop_s} — {p.get('shortForecast','')}")
     return "\n".join(lines)
 
-def _call_llm(prompt):
-    api_key = os.getenv("OPENROUTER_API_KEY")
+def _call_llm(prompt, api_key=None):
+    api_key = api_key or os.getenv("OPENROUTER_API_KEY")
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY not set")
     body = {
@@ -72,7 +72,7 @@ def _call_llm(prompt):
     with urllib.request.urlopen(req, timeout=10) as r:
         return json.loads(r.read())
 
-def recommend(reading, forecast, crop='arugula'):
+def recommend(reading, forecast, crop='arugula', api_key=None):
     cache_key = _key_for(reading, crop)
     now = time.time()
     cached = _cache.get(cache_key)
@@ -88,7 +88,7 @@ def recommend(reading, forecast, crop='arugula'):
             crop=crop,
             forecast_summary=_summarize_forecast(forecast)
         )
-        resp = _call_llm(prompt)
+        resp = _call_llm(prompt, api_key=api_key)
         text = resp['choices'][0]['message']['content']
         result = json.loads(text)
         level = result.get('level')

@@ -114,6 +114,8 @@ def handle_index(environ, start_response):
         }
 
     forecast = get_forecast()
+    api_key_raw = get_cookie(environ, 'openrouter_api_key', '')
+    user_api_key = urllib.parse.unquote(api_key_raw) if api_key_raw else None
     recommendations = {}
     seen_for_rec = set()
     for row in latest_data:
@@ -128,7 +130,7 @@ def handle_index(environ, start_response):
             'air_temp': row['air_temp'],
             'air_humidity': row['air_humidity']
         }
-        recommendations[sid] = recommend(reading, forecast, crop=current_crop)
+        recommendations[sid] = recommend(reading, forecast, crop=current_crop, api_key=user_api_key)
 
     template = env.get_template("index.html")
     content = template.render(
@@ -169,15 +171,48 @@ def handle_devices(environ, start_response):
 
     template = env.get_template('devices.html')
     crop_list = list(advisor.CROP_PROFILES.keys())
+    has_api_key = bool(get_cookie(environ, 'openrouter_api_key', ''))
     content = template.render(
-        devices=device_list, 
+        devices=device_list,
         crop_list=crop_list,
-        theme=theme, 
-        consented=consented
+        theme=theme,
+        consented=consented,
+        has_api_key=has_api_key
     ).encode("utf-8")
 
     start_response("200 OK", [("Content-Type", "text/html")])
     return [content]
+
+def handle_set_api_key(environ, start_response):
+    if environ.get('REQUEST_METHOD') != 'POST':
+        start_response("405 Method Not Allowed", [("Content-Type", "text/plain")])
+        return [b"Method Not Allowed"]
+    try:
+        length = int(environ.get('CONTENT_LENGTH', 0))
+        post_data = parse_qs(environ['wsgi.input'].read(length).decode('utf-8'))
+        key = (post_data.get('api_key', [''])[0] or '').strip()
+        if not key:
+            start_response("303 See Other", [("Location", "/devices")])
+            return [b""]
+        encoded = urllib.parse.quote(key, safe='')
+        headers = [
+            ("Location", "/devices"),
+            ("Set-Cookie", f"openrouter_api_key={encoded}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000")
+        ]
+        start_response("303 See Other", headers)
+        return [b""]
+    except Exception as e:
+        print(f"Set API key error: {e}")
+        start_response("303 See Other", [("Location", "/devices")])
+        return [b""]
+
+def handle_clear_api_key(environ, start_response):
+    headers = [
+        ("Location", "/devices"),
+        ("Set-Cookie", "openrouter_api_key=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0")
+    ]
+    start_response("303 See Other", headers)
+    return [b""]
 
 def handle_sessions(environ, start_response):
     """Lists all monitoring sessions with summary stats."""
@@ -455,6 +490,10 @@ def application(environ, start_response):
         return handle_devices(environ, start_response)
     elif path == "/update_device":
         return handle_update_device(environ, start_response)
+    elif path == "/set_api_key":
+        return handle_set_api_key(environ, start_response)
+    elif path == "/clear_api_key":
+        return handle_clear_api_key(environ, start_response)
     elif path.startswith("/api/history/") and len(path) > len("/api/history/"):
         return handle_sensor_history(environ, start_response)
     elif path == "/sessions":

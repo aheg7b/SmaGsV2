@@ -23,6 +23,27 @@
             <strong>Local Preferences:</strong> Temperature units and display metrics are saved to <em>this browser</em>. Sensor names and assigned crops are saved to the database.
         </div>
 
+        <div class="info-box" style="background: var(--hover-bg); border: 1px solid var(--accent-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: var(--text-color);">
+            <strong>LLM Advisor Key</strong>
+            <p style="margin-top: 6px; opacity: 0.85;">Paste your own OpenRouter key to get richer crop-aware recommendations. The key is stored only as a cookie in <em>this browser</em>. Without a key the dashboard falls back to the rule-based advisor automatically.</p>
+            <p style="margin-top: 6px; opacity: 0.7; font-size: 12px;">Free keys at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener" style="color: var(--accent-primary);">openrouter.ai/keys</a></p>
+
+            {% if has_api_key %}
+            <div style="margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span style="color: var(--accent-primary);">✓ Key configured (•••• stored in cookie)</span>
+                <form action="/clear_api_key" method="POST" style="margin: 0;">
+                    <button type="submit" style="background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid #e74c3c; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;">Clear key</button>
+                </form>
+            </div>
+            {% else %}
+            <form action="/set_api_key" method="POST" style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="password" name="api_key" placeholder="sk-or-v1-..." required autocomplete="off"
+                       style="flex: 1; min-width: 260px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 10px; border-radius: 4px; font-family: monospace;">
+                <button type="submit" style="background: var(--accent-primary); color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Save key</button>
+            </form>
+            {% endif %}
+        </div>
+
         <div class="section">
             <h2 style="color: var(--accent-primary); margin-bottom: 20px;">Registered Devices ({{ devices | length }})</h2>
 

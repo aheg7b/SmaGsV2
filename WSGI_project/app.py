@@ -22,6 +22,27 @@ ALL_METRICS = ["soil_moisture", "soil_temp", "air_humidity", "air_temp"]
 jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
+def _ensure_schema():
+    if not os.path.exists(DB_PATH):
+        return
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(devices)")
+        cols = [c[1] for c in cur.fetchall()]
+        if cols and 'crop_type' not in cols:
+            cur.execute("ALTER TABLE devices ADD COLUMN crop_type TEXT DEFAULT 'generic'")
+        if cols and 'temp_unit' not in cols:
+            cur.execute("ALTER TABLE devices ADD COLUMN temp_unit TEXT DEFAULT 'F'")
+        if cols and 'visible_metrics' not in cols:
+            cur.execute("ALTER TABLE devices ADD COLUMN visible_metrics TEXT DEFAULT '[\"soil_moisture\", \"soil_temp\", \"air_humidity\", \"air_temp\"]'")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Schema migration warning: {e}")
+
+_ensure_schema()
+
 # --- DATABASE & COOKIE HELPERS ---
 def get_db():
     conn = sqlite3.connect(DB_PATH)
